@@ -1,42 +1,47 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurazione multer per salvare i file caricati
-const storage = multer.diskStorage({
-    destination: './uploads/',
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+// Configurazione multer per gestire i file caricati
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Middleware per servire file statici
 app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rotta per il caricamento delle immagini
-app.post('/upload', upload.single('image'), (req, res) => {
-    if (req.file) {
-        res.json({ filePath: `/uploads/${req.file.filename}` });
-    } else {
-        res.status(400).json({ error: 'Errore durante il caricamento dell\'immagine' });
+app.post('/upload', upload.single('image'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nessun file caricato.' });
+    }
+
+    try {
+        const response = await axios.post('https://vercel-storage.url/endpoint', req.file.buffer, {
+            headers: {
+                'Content-Type': req.file.mimetype,
+                'Content-Length': req.file.size,
+            }
+        });
+
+        res.json({ filePath: response.data.url });
+    } catch (error) {
+        console.error('Errore durante il caricamento:', error);
+        res.status(500).json({ error: 'Errore durante il caricamento dell\'immagine' });
     }
 });
 
 // Rotta per ottenere tutte le immagini
-app.get('/images', (req, res) => {
-    const fs = require('fs');
-    const directoryPath = path.join(__dirname, 'uploads');
-    fs.readdir(directoryPath, (err, files) => {
-        if (err) {
-            return res.status(500).json({ error: 'Errore nel recupero delle immagini' });
-        }
-        res.json(files);
-    });
+app.get('/images', async (req, res) => {
+    try {
+        const response = await axios.get('https://vercel-storage.url/endpoint');
+        res.json(response.data);
+    } catch (error) {
+        console.error('Errore durante il recupero delle immagini:', error);
+        res.status(500).json({ error: 'Errore nel recupero delle immagini' });
+    }
 });
 
 // Serve index.html su root
