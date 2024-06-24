@@ -39,6 +39,11 @@ app.get('/images', (req, res) => {
     });
 });
 
+// Serve index.html su root
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Avvio del server
 app.listen(PORT, () => {
     console.log(`Server in esecuzione su http://localhost:${PORT}`);
