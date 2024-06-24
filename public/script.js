@@ -21,13 +21,14 @@ document.getElementById('uploadForm').addEventListener('submit', async (event) =
 
 async function loadImages() {
     const response = await fetch('/images');
+    console.log(response);
     const images = await response.json();
     const gallery = document.getElementById('gallery');
     gallery.innerHTML = '';
 
     images.forEach(image => {
         const img = document.createElement('img');
-        img.src = image.url;
+        img.src = `/uploads/${image}`;
         gallery.appendChild(img);
     });
 }
