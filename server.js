@@ -11,6 +11,7 @@ const upload = multer({ storage });
 
 // Middleware per servire file statici
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rotta per il caricamento delle immagini
 app.post('/upload', upload.single('image'), async (req, res) => {
